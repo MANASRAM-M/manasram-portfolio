@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "ManasRam M | Data Analyst Portfolio",
   description:
     "Premium modern portfolio of ManasRam M – Data Analyst and Data Science graduate focused on turning data into business insights.",
+    verification: {
+      google: "enbXmRS29Yq07Xyp_2r5MYZmd2S_GR1wzwgzga1tRo4",
+    },
 };
 
 export default function RootLayout({
