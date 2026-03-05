@@ -7,14 +7,14 @@ const blobTransition = {
   duration: 26,
   repeat: Infinity,
   repeatType: 'mirror' as const,
-  ease: 'easeInOut',
+  ease: 'easeInOut' as const,
 };
 
 const particleTransition = {
   duration: 20,
   repeat: Infinity,
   repeatType: 'loop' as const,
-  ease: 'linear',
+  ease: 'linear' as const,
 };
 
 const particles = Array.from({ length: 24 }).map((_, index) => ({
