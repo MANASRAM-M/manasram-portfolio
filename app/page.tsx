@@ -3,6 +3,8 @@
 import React from 'react';
 import {
   motion,
+  useMotionTemplate,
+  useMotionValue,
   useScroll,
   useSpring,
   useTransform,
@@ -22,12 +24,38 @@ const sectionTitleVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+const revealContainer = {
+  hidden: { opacity: 0, y: 18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.16, 1, 0.3, 1] as const,
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const revealItem = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
 const cardVariants = {
   hidden: { opacity: 0, y: 40 },
   visible: (index: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: index * 0.08, duration: 0.5, ease: "easeOut" as const },
+    transition: {
+      delay: index * 0.08,
+      duration: 0.5,
+      ease: [0.16, 1, 0.3, 1] as const,
+    },
   }),
 };
 
@@ -146,6 +174,12 @@ export default function Home() {
   const [activeSection, setActiveSection] = React.useState<SectionId>('hero');
   const mainRef = React.useRef<HTMLElement | null>(null);
 
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const glowX = useSpring(mouseX, { stiffness: 60, damping: 30, mass: 0.8 });
+  const glowY = useSpring(mouseY, { stiffness: 60, damping: 30, mass: 0.8 });
+  const mouseGlow = useMotionTemplate`radial-gradient(700px circle at ${glowX}px ${glowY}px, rgba(34,211,238,0.10), transparent 55%)`;
+
   const { scrollYProgress } = useScroll({
     target: mainRef,
     offset: ['start start', 'end end'],
@@ -191,8 +225,22 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
+  React.useEffect(() => {
+    const handleMove = (event: MouseEvent) => {
+      mouseX.set(event.clientX);
+      mouseY.set(event.clientY);
+    };
+    window.addEventListener('mousemove', handleMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, [mouseX, mouseY]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-950 text-slate-100">
+      <motion.div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 opacity-40"
+        style={{ backgroundImage: mouseGlow }}
+      />
       <motion.div
         className="fixed left-0 top-0 z-40 h-[2px] origin-left bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500"
         style={{ scaleX: progressWidth }}
@@ -253,13 +301,18 @@ export default function Home() {
         </nav>
       </header>
 
-      <main
+      <motion.main
         ref={mainRef}
         className="mx-auto max-w-6xl px-4 pb-20 pt-10 sm:px-6 lg:px-8 lg:pt-16"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
       >
-        <section
+        <motion.section
           id="hero"
           className="relative overflow-hidden rounded-3xl border border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-950 to-slate-950 px-6 py-10 shadow-2xl shadow-cyan-950/70 sm:px-10 lg:flex lg:items-center lg:gap-10 lg:py-14"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
         >
           <motion.div
             className="pointer-events-none absolute inset-0 -z-10"
@@ -302,37 +355,34 @@ export default function Home() {
 
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16)_0,_transparent_55%),radial-gradient(circle_at_bottom,_rgba(129,140,248,0.16)_0,_transparent_60%)]" />
 
-          <div className="relative flex-1 space-y-6">
+          <motion.div
+            className="relative flex-1 space-y-6"
+            variants={revealContainer}
+            initial="hidden"
+            animate="visible"
+          >
             <motion.p
               className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-slate-900/60 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-cyan-100/90 backdrop-blur"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              variants={revealItem}
             >
               Data Analyst · Data Science Graduate
               <span className="h-1 w-1 rounded-full bg-cyan-300" />
             </motion.p>
             <motion.h1
               className="text-balance text-3xl font-semibold tracking-tight text-slate-50 sm:text-4xl lg:text-5xl"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
+              variants={revealItem}
             >
               ManasRam M
             </motion.h1>
             <motion.p
               className="text-lg font-medium text-cyan-200/90 sm:text-xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
+              variants={revealItem}
             >
               Data Analyst | Turning Data into Business Insights
             </motion.p>
             <motion.p
               className="max-w-xl text-sm leading-relaxed text-slate-300/90 sm:text-base"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.18 }}
+              variants={revealItem}
             >
               Data Analyst skilled in Python, SQL, and Power BI with experience
               building dashboards, performing exploratory data analysis, and
@@ -342,13 +392,11 @@ export default function Home() {
 
             <motion.div
               className="flex flex-wrap items-center gap-4"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.25 }}
+              variants={revealItem}
             >
               <button
                 onClick={() => scrollToSection('projects')}
-                className="group inline-flex items-center gap-2 rounded-full bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-300"
+                className="group inline-flex items-center gap-2 rounded-full bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-gradient-to-r hover:from-cyan-200 hover:to-indigo-200 hover:shadow-cyan-400/40"
               >
                 View Projects
                 <span className="transition-transform group-hover:translate-x-1">
@@ -358,7 +406,7 @@ export default function Home() {
               <a
                 href="/ManasRam_Data_Analyst_Resume.pdf"
                 download
-                className="inline-flex items-center gap-2 rounded-full border border-slate-600/80 bg-slate-900/70 px-4 py-2.5 text-sm font-semibold text-slate-100 shadow-md shadow-slate-900/70 backdrop-blur transition hover:border-cyan-400 hover:text-cyan-200"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-600/80 bg-slate-900/70 px-4 py-2.5 text-sm font-semibold text-slate-100 shadow-md shadow-slate-900/70 backdrop-blur transition hover:border-cyan-400 hover:text-cyan-200 hover:shadow-cyan-500/30"
               >
                 Download Resume
               </a>
@@ -366,9 +414,7 @@ export default function Home() {
 
             <motion.div
               className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-300/80"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.32 }}
+              variants={revealItem}
             >
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Core stack
@@ -398,21 +444,21 @@ export default function Home() {
                 Power BI Dashboards
               </motion.span>
             </motion.div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         <SectionDivider />
 
         <motion.section
           id="about"
           className="mt-16 grid gap-8 rounded-3xl border border-slate-800/60 bg-slate-950/70 px-6 py-8 shadow-[0_24px_80px_rgba(15,23,42,0.8)] backdrop-blur-xl sm:px-10 lg:grid-cols-[3fr,2fr]"
-          variants={sectionTitleVariants}
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.25 }}
           transition={{ duration: 0.6 }}
         >
-          <div>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               About
             </h2>
@@ -427,8 +473,8 @@ export default function Home() {
               analysis, and storytelling with visuals so that stakeholders can
               move from intuition-driven decisions to evidence-based strategies.
             </p>
-          </div>
-          <div className="grid gap-3 text-sm text-slate-200/90">
+          </motion.div>
+          <motion.div variants={revealItem} className="grid gap-3 text-sm text-slate-200/90">
             <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
               Strengths
             </h3>
@@ -451,7 +497,7 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </motion.section>
 
         <SectionDivider />
@@ -461,9 +507,10 @@ export default function Home() {
           className="mt-16 space-y-6"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
-          <motion.div variants={sectionTitleVariants}>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               Skills
             </h2>
@@ -473,7 +520,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <motion.div variants={revealItem} className="grid gap-5 md:grid-cols-2">
             <motion.div
               className="group rounded-3xl border border-slate-800/70 bg-slate-950/70 p-5 shadow-xl shadow-cyan-900/40 backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-cyan-500/40"
               variants={cardVariants}
@@ -566,7 +613,7 @@ export default function Home() {
                 ))}
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         </motion.section>
 
         <SectionDivider />
@@ -576,14 +623,15 @@ export default function Home() {
           className="mt-16"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
-          <motion.div variants={sectionTitleVariants}>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               Experience
             </h2>
           </motion.div>
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
+          <motion.div variants={revealItem} className="mt-6 grid gap-5 md:grid-cols-2">
             <motion.article
               className="relative overflow-hidden rounded-3xl border border-slate-800/70 bg-slate-950/70 p-5 shadow-xl shadow-cyan-900/40 backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-cyan-500/40"
               variants={cardVariants}
@@ -625,7 +673,7 @@ export default function Home() {
                 </ul>
               </div>
             </motion.article>
-          </div>
+          </motion.div>
         </motion.section>
 
         <SectionDivider />
@@ -635,9 +683,10 @@ export default function Home() {
           className="mt-16"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
-          <motion.div variants={sectionTitleVariants}>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               Projects
             </h2>
@@ -646,14 +695,17 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
+          <motion.div variants={revealItem} className="mt-6 grid gap-6 md:grid-cols-3">
             {projects.map((project, index) => (
               <motion.article
                 key={project.title}
                 className="group relative overflow-hidden rounded-3xl border border-slate-800/70 bg-slate-950/70 p-[1px] shadow-xl shadow-slate-950/80 backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2"
                 custom={index}
                 variants={cardVariants}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
               >
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyan-400/25 via-indigo-400/15 to-fuchsia-400/20 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2)_0,transparent_55%),radial-gradient(circle_at_bottom,_rgba(129,140,248,0.16)_0,transparent_60%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="relative flex h-full flex-col rounded-[1.3rem] bg-slate-950/90 p-4">
                   <h3 className="text-sm font-semibold text-slate-50 sm:text-base">
@@ -692,7 +744,7 @@ export default function Home() {
                 </div>
               </motion.article>
             ))}
-          </div>
+          </motion.div>
         </motion.section>
 
         <SectionDivider />
@@ -702,9 +754,10 @@ export default function Home() {
           className="mt-16"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
-          <motion.div variants={sectionTitleVariants}>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               Case Studies
             </h2>
@@ -713,11 +766,11 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="mt-6 space-y-4">
+          <motion.div variants={revealItem} className="mt-6 space-y-4">
             {projects.map((project, index) => (
               <ExpandableCaseStudy key={project.title} project={project} index={index} />
             ))}
-          </div>
+          </motion.div>
         </motion.section>
 
         <SectionDivider />
@@ -727,9 +780,10 @@ export default function Home() {
           className="mt-16"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
-          <motion.div variants={sectionTitleVariants}>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               Analytics Snapshot
             </h2>
@@ -913,9 +967,10 @@ export default function Home() {
           className="mt-16"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
-          <motion.div variants={sectionTitleVariants}>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               GitHub Activity
             </h2>
@@ -997,6 +1052,7 @@ export default function Home() {
           className="mt-16 grid gap-6 lg:grid-cols-[1.6fr,1.4fr]"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
           <motion.div
@@ -1052,9 +1108,10 @@ export default function Home() {
           className="mt-16"
           initial="hidden"
           whileInView="visible"
+          variants={revealContainer}
           viewport={{ once: true, amount: 0.2 }}
         >
-          <motion.div variants={sectionTitleVariants}>
+          <motion.div variants={revealItem}>
             <h2 className="text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
               Contact
             </h2>
@@ -1149,7 +1206,7 @@ export default function Home() {
             </motion.form>
           </div>
         </motion.section>
-      </main>
+      </motion.main>
     </div>
   );
 }
